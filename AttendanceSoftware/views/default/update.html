@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, td, th
+{
+border:1px solid green;
+}
+th
+{
+background-color:green;
+color:white;
+}
+</style>
+</head>
+</html>
+{{extend 'layout.html'}}
+<h3>Canteen Attendance</h3>
+<a href="/AttendanceSoftware/static/MachineAttendance.xlsx?attachment">Download Sample</a>
+{{=FormUploadCanteenAttendance}}
+<h3>Canteen WW Attendance</h3>
+<a href="/AttendanceSoftware/static/MachineAttendance.xlsx?attachment">Download Sample</a>
+{{=FormUploadCanteenWWAttendance}}
+
+<h3>SewaSamit Attendance dates</h3>
+<a href="/AttendanceSoftware/static/SSAttendanceDates_xls.xlsx?attachment">Download Sample</a>
+{{=FormUploadSSDates}}
+<h3>SewaSamit Attendance count</h3>
+<a href="/AttendanceSoftware/static/SSAttendanceCount_xls.xlsx?attachment">Download Sample</a>
+{{=FormUploadSSCount}}
+<h3>Master</h3>
+<a href="/AttendanceSoftware/static/Master_xls.xlsx?attachment">Download Sample</a>
+{{=FormUploadMaster}}
+<h3>Sewa Samiti Pre Visit Parshad List</h3>
+<a href="/AttendanceSoftware/static/SSParshadStatus.xlsx?attachment">Download Sample</a>
+{{=FormSSPreVisitParshadList}}
+<h3>Sewa Samiti Pre Visit Parshad List</h3>
+<a href="/AttendanceSoftware/static/SSParshadStatus.xlsx?attachment">Download Sample</a>
+{{=FormSSPreVisitParshadList}}
+<h3>Sewa Samiti Post Visit Parshad List</h3>
+<a href="/AttendanceSoftware/static/SSParshadStatus.xlsx?attachment">Download Sample</a>
+{{=FormSSPostVisitParshadList}}
