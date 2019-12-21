@@ -118,14 +118,14 @@ def update():
     FormUploadCanteenAttendance=form_factory(SQLField('CTNAttendance_xls','upload',uploadfolder='temporary'),formname='CTNATTENDANCE')
     if FormUploadCanteenAttendance.accepts(request.vars,session,formname='CTNATTENDANCE'):
         request.flash='Received: %s'%request.vars.CTNAttendance_xls
-        path = os.path.join(request.folder,'private','CTNATtendance.xlsx')
+        path = os.path.join(request.folder,'private','CTNAttendance.xlsx')
         import shutil
         shutil.copyfileobj(request.vars.CTNAttendance_xls.file,open(path, 'wb'))
         #Then redirect to the next screen (or do the processing now)
         redirect(URL(r=request, f='uploaddata_CTNAttendance'))
 
     FormUploadCanteenWWAttendance=form_factory(SQLField('CTNWWAttendance_xls','upload',uploadfolder='temporary'), formname='CTNWWATTENDANCE')
-    if FormUploadCanteenAttendance.accepts(request.vars,session,formname='CTNWWATTENDANCE'):
+    if FormUploadCanteenWWAttendance.accepts(request.vars,session,formname='CTNWWATTENDANCE'):
         request.flash='Received: %s'%request.vars.CTNWWAttendance_xls
         path = os.path.join(request.folder,'private','CTNWWATtendance.xlsx')
         import shutil
@@ -134,3 +134,75 @@ def update():
         redirect(URL(r=request, f='uploaddata_CTNWWAttendance'))
 
     return dict(FormUploadCanteenAttendance=FormUploadCanteenAttendance,FormUploadCanteenWWAttendance=FormUploadCanteenWWAttendance,FormUploadSSDates=FormUploadSSDates,FormUploadSSCount=FormUploadSSCount,FormUploadMaster=FormUploadMaster,FormSSPreVisitParshadList=FormSSPreVisitParshadList,FormSSPostVisitParshadList=FormSSPostVisitParshadList)
+
+def uploaddata_CTNAttendance():
+    import pandas as pd
+    import os
+    import datetime as dt
+    path = os.path.join(request.folder,'private','CTNAttendance.xlsx')
+    pathlog = os.path.join(request.folder,'private','log_upload_CTNAttendance')
+    logf = open(pathlog,'w')
+    df = pd.read_excel(path)
+    #First check data sanity
+    #Critical errors:
+    #5. Columns missing
+    #6. Invalid Date time format
+    #1. Check for GRNO repetition with overlapping dates
+    #2. Check for out datetime less than in datetime
+    #3. Check for out_datetime-in_datetime > 48 hrs
+    #4. Check for in_datetime is in future
+    #Non-critical errors:
+    #1. Check for in_datetime in distant past
+    #2. GRNO not in master
+    #3. GRNO repetition for different date . Uploading many days at once
+    Critical_Errors = pd.DataFrame(columns = ['Line No.','Error','List________________________________________________________________'])
+    if not all(elem in ['GRNO','InDate','InTime','OutDate','OutTime'] for elem in df.columns):
+        Critical_Errors.loc['HEADER_MISSING'] = [1,"Uploaded sheet must have these columns","GRNO,InDate,InTime,OutDate,OutTime"]
+        return dict(Critical_Errors=Critical_Errors.to_html(index=False,justify='center',col_space=500))
+
+    df['GRNO'] = df.apply(lambda row: row['GRNO'].upper(), axis=1)
+ 
+
+    logf.write(df.to_string())
+    logf.write("\n")
+    logf.write(df.dtypes.to_string())
+    logf.write("\n")
+    if not df.dtypes.at['InDate'] == 'datetime64[ns]':
+        Critical_Errors.loc[len(Critical_Errors.index)] = [1,"FORMAT MISMATCH","InDate format mismatch"]
+    if not df.dtypes.at['OutDate'] == 'datetime64[ns]':
+        Critical_Errors.loc[len(Critical_Errors.index)] = [1,"FORMAT MISMATCH","OutDate format mismatch"]
+    if len(Critical_Errors.index)>0:
+        return dict(Critical_Errors=Critical_Errors.to_html())
+
+    df['InTime'] = pd.Series(map(lambda x:dt.timedelta(hours=x.hour,minutes=x.minute),df['InTime']))
+    df['InDateTime'] = df.apply(lambda x:x.InDate + x.InTime,axis=1)
+    df['OutTime'] = pd.Series(map(lambda x:dt.timedelta(hours=x.hour,minutes=x.minute),df['OutTime']))
+    df['OutDateTime'] = df.apply(lambda x:x.OutDate + x.OutTime,axis=1)
+    logf.write(df.to_string())
+    logf.write("\n")
+    for row in df.iterrows():
+        logf.write("All GRNO with same date entry\n")
+        logf.write(df[(df['GRNO']==row[1]['GRNO']) & (df['InDate']==row[1]['InDate'])].to_string())
+        logf.write("\n")
+        if len(row[1]['GRNO']) != 12:
+            logf.write(str(len(row[1]['GRNO'])) + "\n")
+            Critical_Errors.loc[len(Critical_Errors.index)] = [row[0]+2,"GRNO is incomplete",row[1]['GRNO']]
+        if len(df[(df['GRNO']==row[1]['GRNO']) & (df['InDate']==row[1]['InDate'])].index) > 1:
+            Critical_Errors.loc[len(Critical_Errors.index)] = [row[0]+2,"OVERLAPPING DATES",row[1]['GRNO'] + " has overlapping InDates " + row[1]['InDate'].strftime("%d-%b-%y")]
+        if len(df[(df['GRNO']==row[1]['GRNO']) & (df['OutDate']==row[1]['OutDate'])].index) > 1:
+            Critical_Errors.loc[len(Critical_Errors.index)] = [row[0]+2,"OVERLAPPING DATES",row[1]['GRNO'] + " has overlapping OutDate " + row[1]['OutDate'].strftime("%d-%b-%y")]
+        if row[1]['InDateTime'] >= row[1]['OutDateTime']:
+            Critical_Errors.loc[len(Critical_Errors.index)] = [row[0]+2,"EXIT BEFORE ENTRY",row[1]['GRNO'] + " In " + row[1]['InDateTime'].strftime("%d-%b %H:%M") + " Out " + row[1]['OutDateTime'].strftime("%d-%b %H:%M")]
+        if (row[1]['OutDateTime'] - row[1]['InDateTime']) >= dt.timedelta(hours=48):
+            Critical_Errors.loc[len(Critical_Errors.index)] = [row[0]+2,"ATTENDANCE FOR MORE THAN ONE DAY",row[1]['GRNO'] + " In " + row[1]['InDateTime'].strftime("%d-%b %H:%M") + " Out " + row[1]['OutDateTime'].strftime("%d-%b %H:%M")]
+
+    if len(Critical_Errors.index)>0:
+        logf.close()
+        return dict(Critical_Errors=Critical_Errors.to_html(index=False,justify='center',col_space=500))
+    
+
+    for row in df.iterrows():
+        dbData.CtnAttendance.insert(GRNO=row[1]['GRNO'],ENTRY=row[1]['InDateTime'],EXIT=row[1]['OutDateTime'])
+
+    logf.close()
+    return("Upload Successful")
