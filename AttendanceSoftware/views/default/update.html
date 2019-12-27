@@ -15,11 +15,12 @@ color:white;
 </head>
 </html>
 {{extend 'layout.html'}}
+{{=response.toolbar()}}
 <h3>Canteen Attendance</h3>
 <a href="/AttendanceSoftware/static/MachineAttendance.xlsx?attachment">Download Sample</a>
 {{=FormUploadCanteenAttendance}}
 <h3>Daily Attendance Report</h3>
-{{=CreateDailyAttendanceReport}}
+{{=FormCreateDailyAttendanceReport}}
 <h3>Canteen WW Attendance</h3>
 <a href="/AttendanceSoftware/static/MachineAttendance.xlsx?attachment">Download Sample</a>
 {{=FormUploadCanteenWWAttendance}}

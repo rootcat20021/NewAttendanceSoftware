@@ -63,15 +63,51 @@ dbData.define_table(
     Field('CANTEEN'),
     Field('JATHA'),
     Field('VISIT_CANTEEN'),
-    Field('SSCount','reference SSCounts'),
-    Field('SSDates','list:reference SSDates'),
-    Field('CtnAttendance','list:reference CtnAttendance'),
-    Field('CtnWWAttendance','list:reference CtnWWAttendance'),
+#    Field('SSCount','reference SSCounts'),
+#    Field('SSDates','list:reference SSDates'),
+#    Field('CtnAttendance','list:reference CtnAttendance'),
+#    Field('CtnWWAttendance','list:reference CtnWWAttendance'),
     redefine=True,
     format = '%(GRNO)s')
 dbData.Master.GRNO.requires = IS_NOT_EMPTY('')
 dbData.Master.CANTEEN.requires = IS_NOT_EMPTY()
 dbData.Master.JATHA.requires = IS_NOT_EMPTY()
-dbData.Master.VISIT_CANTEEN.requires = IS_NOT_EMPTY()
 dbData.Master.VISIT_CANTEEN.requires = IS_IN_SET([1,2,3,4,5,6,'ADMIN','SHED','2-A','2-B'])
 dbData.Master.CANTEEN.requires = IS_IN_SET([1,2,3,4,5,6,'ADMIN','SHED','2-A','2-B'])
+
+dbData.define_table(
+    'SewaSchedule',
+    Field('DATE','datetime'),
+    Field('CANTEEN'),
+    redefine=True
+)
+
+dbData.define_table(
+    'GLOBAL_TIMINGS',
+    Field('NIGHT_ENTRY_SAMPLE_POINT','time'),
+    Field('NIGHT_EXIT_SAMPLE_POINT','time'),
+    Field('MORNING_ENTRY_SAMPLE_POINT','time'),
+    Field('MORNING_EXIT_SAMPLE_POINT','time'),
+    Field('EVENING_EXIT_SAMPLE_POINT','time'),
+    Field('MINIMUM_HOURS_DAILY','integer'),
+    Field('MINIMUM_HOURS_24HR','integer'),
+    redefine=True
+)
+
+dbData.define_table(
+    'EXEMPTED24HR_JATHAS',
+    Field('JATHA'),
+    redefine=True
+)
+
+dbData.define_table(
+    'EXEMPTED24HR_CANTEENS',
+    Field('CANTEENS'),
+    redefine=True
+)
+
+dbData.define_table(
+    'EXEMPTED24HR_GRNO',
+    Field('GRNO'),
+    redefine=True
+)
