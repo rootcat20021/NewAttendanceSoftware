@@ -9,8 +9,11 @@ dbData.define_table(
     'SSDates',
     Field('GRNO'),
     Field('DATE','datetime'),
+    Field('CtnDate','list:reference CtnAttendance'),
+    Field('CtnWWDate','list:reference CtnWWDate'),
     Field('TYPE'),
-    redefine=True
+    redefine=True,
+    format = '%(GRNO)s %(DATE)s %(TYPE)s'
 )
 
 
@@ -18,9 +21,8 @@ dbData.define_table(
     'CtnWWAttendance',
     Field('GRNO'),
     Field('DATE','datetime'),
-    Field('Remarks'),
-    Field('SSMarkingDate','datetime'),
-    Field('SSMarked','boolean'),
+    Field('Remark'),
+    Field('SSDate','reference SSDates'),
     redefine=True,
     format = '%(GRNO)s'
 )
@@ -30,8 +32,8 @@ dbData.define_table(
     Field('GRNO'),
     Field('ENTRY','datetime'),
     Field('EXIT','datetime'),
-    Field('SSDate','datetime'),
-    Field('SSMarked','boolean'),
+    Field('SSDate','reference SSDates'),
+    Field('SSTentativeMapping','datetime'),
     redefine=True,
     format = '%(GRNO)s'
 )
@@ -84,6 +86,7 @@ dbData.define_table(
 
 dbData.define_table(
     'GLOBAL_TIMINGS',
+    Field('PRESENCE_SAMPLE_POINT','time'),
     Field('NIGHT_ENTRY_SAMPLE_POINT','time'),
     Field('NIGHT_EXIT_SAMPLE_POINT','time'),
     Field('MORNING_ENTRY_SAMPLE_POINT','time'),
@@ -97,17 +100,25 @@ dbData.define_table(
 dbData.define_table(
     'EXEMPTED24HR_JATHAS',
     Field('JATHA'),
+    Field('EXEMPTION_24HR_JATHA','integer'),
     redefine=True
 )
 
 dbData.define_table(
     'EXEMPTED24HR_CANTEENS',
-    Field('CANTEENS'),
+    Field('CANTEEN'),
+    Field('EXEMPTION_24HR_CANTEEN','integer'),
     redefine=True
 )
 
 dbData.define_table(
     'EXEMPTED24HR_GRNO',
     Field('GRNO'),
+    Field('EXEMPTION_24HR_GRNO','integer'),
+    redefine=True
+)
+
+dbData.define_table('LocalVariables',
+    Field('LastUpdated','datetime'),
     redefine=True
 )
